@@ -5,7 +5,7 @@ on:
     branches:
       - development
     tags-ignore:
-      - '**'
+      - "**"
   pull_request:
     branches:
       - development
@@ -33,7 +33,7 @@ jobs:
         run: npm test
       - name: Lint
         run: npm run lint
-      # Create recursivelly the destiantion dir with
+      # Create recursively the destination dir with
       # "--parrents where no error if existing, make parent directories as needed."
       - run: mkdir -p ./build/${{ github.head_ref || github.ref_name }}
       - name: Deploy to GitHub Pages
