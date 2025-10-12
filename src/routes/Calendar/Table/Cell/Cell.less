@@ -28,10 +28,9 @@
 
     .heading {
         position: relative;
-        width: 100%;
+        flex: 1 1 40%;
         display: flex;
-        align-items: start;
-        padding: 0;
+        align-items: flex-start;
 
         .day {
             flex: none;
@@ -54,7 +53,10 @@
         flex-direction: row;
         gap: 0.1em;
         padding: 0.1rem;
-        width: 90%;
+        flex: 1 1 60%;
+        overflow-x: auto;
+        overflow-y: hidden; 
+        min-width: 0;
 
         .item {
             flex: none;
@@ -63,8 +65,9 @@
             justify-content: center;
             height: 100%;
             aspect-ratio: 2 / 3;
-            border-radius: var(--border-radius);
-            max-height: clamp(8rem, 25vh, 14rem);
+            border-radius: calc(var(--border-radius) /2);
+            max-height: 100%;
+            width: 100%;
 
             .icon {
                 flex: none;
@@ -84,6 +87,7 @@
                 max-height: 100%;
                 aspect-ratio: 2 / 3;
                 object-fit: cover;
+                border-radius: inherit
             }
 
             .icon, .poster {
@@ -115,7 +119,10 @@
     &.today {
         .heading {
             .day {
+                width: auto;
                 background-color: var(--primary-accent-color);
+                height: auto;
+                padding: 0.3rem;
             }
         }
     }
@@ -142,11 +149,20 @@
             justify-content: space-evenly;
 
             .item {
-                width: 80%;
+                width: 100%;
             }
         }
     }
 }
+
+@media only screen and (max-height: @xxsmall) and (max-width: @xxsmall) and (orientation: landscape) {
+  .cell{
+    .items{
+        width: 100%;
+    }
+  }
+}
+
 
 @media only screen and (max-height: @medium) and (max-width: @medium) and (orientation: landscape) {
     .cell {
@@ -161,12 +177,6 @@
 
         .items {
             width: 100%;
-
-            .item {
-                pointer-events: none;
-                border-radius: calc(var(--border-radius) / 2);
-                width: 80%;
-            }
         }
     }
 }
@@ -175,30 +185,16 @@
   .cell {
       position: relative;
       flex-direction: row;
-      align-items: center;
       display: flex;
-
-      .items {
-          display: none;
-      }
 
       .heading {
           display: flex;
-          align-items: center;
           gap: 0.25rem;
           width: auto; 
-      }
+          .day{
+              font-size: 0.6rem;
+          }
 
-      .day {
-          margin-right: 0.25rem;
-      }
-
-      .more {
-          display: inline-flex;
-          position: relative;
-          height: auto;
-          padding: 0;
-          width: 30%;
       }
   }
 }
