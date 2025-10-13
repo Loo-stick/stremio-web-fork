@@ -553,7 +553,7 @@ const Player = ({ urlParams, queryParams }) => {
         const videoInfo = video && video.season && video.episode ? ` (${video.season}x${video.episode})`: null;
         const videoTitle = video ? `${video.title}${videoInfo}` : null;
         const metaTitle = metaItem ? metaItem.name : null;
-        const imageUrl = metaItem ? metaItem.poster : null;
+        const imageUrl = metaItem ? metaItem.logo : null;
 
         const title = videoTitle ?? metaTitle;
         const artist = videoTitle ? metaTitle : undefined;
