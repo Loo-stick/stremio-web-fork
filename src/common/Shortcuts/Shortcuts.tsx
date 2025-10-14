@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect } from 'react';
-import shortcuts from './shortcuts';
+import shortcuts from './shortcuts.json';
 
 const SHORTCUTS = shortcuts.map(({ shortcuts }) => shortcuts).flat();
 
