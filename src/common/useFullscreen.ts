@@ -14,7 +14,9 @@ const useFullscreen = () => {
         if (shell.active) {
             shell.send('win-set-visibility', { fullscreen: true });
         } else {
-            document.documentElement.requestFullscreen();
+            document.documentElement.requestFullscreen().catch((err) => {
+                console.error(`Error enabling fullscreen: ${err.message}`);
+            });
         }
     }, []);
 
