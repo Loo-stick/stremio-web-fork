@@ -10,13 +10,15 @@ const useFullscreen = () => {
 
     const [fullscreen, setFullscreen] = useState(false);
 
-    const requestFullscreen = useCallback(() => {
+    const requestFullscreen = useCallback(async () => {
         if (shell.active) {
             shell.send('win-set-visibility', { fullscreen: true });
         } else {
-            document.documentElement.requestFullscreen().catch((err) => {
-                console.error(`Error enabling fullscreen: ${err.message}`);
-            });
+            try {
+                await document.documentElement.requestFullscreen();
+            } catch (err) {
+                console.error('Error enabling fullscreen', err);
+            }
         }
     }, []);
 
