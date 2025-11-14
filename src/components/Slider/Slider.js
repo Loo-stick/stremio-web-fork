@@ -8,7 +8,7 @@ const useAnimationFrame = require('stremio/common/useAnimationFrame');
 const useLiveRef = require('stremio/common/useLiveRef');
 const styles = require('./styles');
 
-const Slider = ({ className, value, buffered, minimumValue, maximumValue, disabled, onSlide, onComplete }) => {
+const Slider = ({ className, value, buffered, minimumValue, maximumValue, disabled, onSlide, onComplete, audioBoost }) => {
     const minimumValueRef = useLiveRef(minimumValue !== null && !isNaN(minimumValue) ? minimumValue : 0);
     const maximumValueRef = useLiveRef(maximumValue !== null && !isNaN(maximumValue) ? maximumValue : 100);
     const valueRef = useLiveRef(value !== null && !isNaN(value) ? Math.min(maximumValueRef.current, Math.max(minimumValueRef.current, value)) : 0);
@@ -31,14 +31,18 @@ const Slider = ({ className, value, buffered, minimumValue, maximumValue, disabl
     const retainThumb = React.useCallback(() => {
         window.addEventListener('blur', onBlur);
         window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchend', onTouchEnd);
         window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('touchmove', onTouchMove);
         document.documentElement.className = classnames(document.documentElement.className, styles['active-slider-within']);
     }, []);
     const releaseThumb = React.useCallback(() => {
         cancelThumbAnimation();
         window.removeEventListener('blur', onBlur);
         window.removeEventListener('mouseup', onMouseUp);
+        window.removeEventListener('touchend', onTouchEnd);
         window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('touchmove', onTouchMove);
         const classList = document.documentElement.className.split(' ');
         const classIndex = classList.indexOf(styles['active-slider-within']);
         if (classIndex !== -1) {
@@ -85,6 +89,36 @@ const Slider = ({ className, value, buffered, minimumValue, maximumValue, disabl
 
         retainThumb();
     }, []);
+    const onTouchStart = React.useCallback((event) => {
+        const touch = event.touches[0];
+        const value = calculateValueForMouseX(touch.clientX);
+        if (typeof onSlideRef.current === 'function') {
+            onSlideRef.current(value);
+        }
+
+        retainThumb();
+        event.preventDefault();
+    }, []);
+    const onTouchMove = React.useCallback((event) => {
+        requestThumbAnimation(() => {
+            const touch = event.touches[0];
+            const value = calculateValueForMouseX(touch.clientX);
+            if (typeof onSlideRef.current === 'function') {
+                onSlideRef.current(value);
+            }
+        });
+
+        event.preventDefault();
+    }, []);
+    const onTouchEnd = React.useCallback((event) => {
+        const touch = event.changedTouches[0];
+        const value = calculateValueForMouseX(touch.clientX);
+        if (typeof onCompleteRef.current === 'function') {
+            onCompleteRef.current(value);
+        }
+
+        releaseThumb();
+    }, []);
     React.useLayoutEffect(() => {
         if (!routeFocused || disabled) {
             releaseThumb();
@@ -98,15 +132,18 @@ const Slider = ({ className, value, buffered, minimumValue, maximumValue, disabl
     const thumbPosition = Math.max(0, Math.min(1, (valueRef.current - minimumValueRef.current) / (maximumValueRef.current - minimumValueRef.current)));
     const bufferedPosition = Math.max(0, Math.min(1, (bufferedRef.current - minimumValueRef.current) / (maximumValueRef.current - minimumValueRef.current)));
     return (
-        <div ref={sliderContainerRef} className={classnames(className, styles['slider-container'], { 'disabled': disabled })} onMouseDown={onMouseDown}>
+        <div ref={sliderContainerRef} className={classnames(className, styles['slider-container'], { 'disabled': disabled })} onMouseDown={onMouseDown} onTouchStart={onTouchStart}>
             <div className={styles['layer']}>
-                <div className={styles['track']} />
+                <div className={classnames(styles['track'], { [styles['audio-boost']]: audioBoost })} />
             </div>
             <div className={styles['layer']}>
                 <div className={styles['track-before']} style={{ width: `calc(100% * ${bufferedPosition})` }} />
             </div>
             <div className={styles['layer']}>
-                <div className={styles['track-after']} style={{ width: `calc(100% * ${thumbPosition})` }} />
+                <div
+                    className={classnames(styles['track-after'], { [styles['audio-boost']]: audioBoost })}
+                    style={{ '--mask-width': `calc(${thumbPosition} * 100%)` }}
+                />
             </div>
             <div className={styles['layer']}>
                 <div className={styles['thumb']} style={{ marginLeft: `calc(100% * ${thumbPosition})` }} />
@@ -123,7 +160,8 @@ Slider.propTypes = {
     maximumValue: PropTypes.number,
     disabled: PropTypes.bool,
     onSlide: PropTypes.func,
-    onComplete: PropTypes.func
+    onComplete: PropTypes.func,
+    audioBoost: PropTypes.bool
 };
 
 module.exports = Slider;

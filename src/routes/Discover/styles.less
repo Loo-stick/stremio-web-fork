@@ -17,7 +17,7 @@
 }
 
 .discover-container {
-    height: 100%;
+    height: calc(100% - var(--safe-area-inset-bottom));
     background-color: transparent;
 
     .discover-content {
@@ -50,6 +50,7 @@
 
                 .select-input {
                     flex: 0 1 15rem;
+                    background-color: var(--overlay-color);
 
                     &:not(:first-child) {
                         margin-left: 1.5rem;
@@ -59,7 +60,9 @@
                         display: none;
 
                         &~.filter-container {
-                            display: flex;
+                            .filter-button {
+                                display: flex;
+                            }
                         }
                     }
 
@@ -69,20 +72,27 @@
                 }
 
                 .filter-container {
-                    flex: none;
-                    display: none;
-                    align-items: center;
-                    justify-content: center;
-                    width: 3rem;
-                    height: 3rem;
-                    border-radius: var(--border-radius);
-                    background-color: var(--overlay-color);
+                    display: flex;
+                    flex: 1 0 5rem;
+                    justify-content: flex-end;
 
-                    .filter-icon {
+                    .filter-button {
                         flex: none;
-                        width: 1.4rem;
-                        height: 1.4rem;
-                        color: var(--primary-foreground-color);
+                        display: none;
+                        align-items: center;
+                        justify-content: center;
+                        width: 3rem;
+                        height: 3rem;
+                        margin-left: 1.5rem;
+                        border-radius: var(--border-radius);
+                        background-color: var(--overlay-color);
+
+                        .filter-icon {
+                            flex: none;
+                            width: 1.4rem;
+                            height: 1.4rem;
+                            color: var(--primary-foreground-color);
+                        }
                     }
                 }
             }
@@ -218,14 +228,19 @@
             overflow: visible !important;
 
             .select-input {
-                height: 3.5rem;
+                height: 3rem;
+                display: none;
 
-                &:not(:last-child) {
-                    margin-bottom: 1rem;
+                &:nth-child(n+4) {
+                    display: flex;
+
+                    &:not(:last-child) {
+                        margin-bottom: 1rem;
+                    }
                 }
 
                 .multiselect-menu-container {
-                    max-height: calc(3.2rem * 3);
+                    max-height: calc(3rem * 3);
                     overflow: auto;
                 }
             }
@@ -363,7 +378,9 @@
                             display: none;
 
                             &~.filter-container {
-                                display: flex;
+                                .filter-button {
+                                    display: flex;
+                                }
                             }
                         }
                     }
@@ -371,6 +388,24 @@
 
                 .meta-items-container {
                     grid-template-columns: repeat(3, 1fr);
+                }
+            }
+        }
+    }
+
+    .selectable-inputs-modal {
+        .selectable-inputs-modal-container {
+            .selectable-inputs-modal-content {
+                .select-input {
+                    display: none;
+
+                    &:nth-child(n+2) {
+                        display: flex;
+
+                        &:not(:last-child) {
+                            margin-bottom: 1rem;
+                        }
+                    }
                 }
             }
         }

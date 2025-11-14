@@ -5,29 +5,34 @@ const PropTypes = require('prop-types');
 const classnames = require('classnames');
 const { useTranslation } = require('react-i18next');
 const { default: Icon } = require('@stremio/stremio-icons/react');
-const { Button, Image, Multiselect } = require('stremio/components');
+const { Button, Image, MultiselectMenu } = require('stremio/components');
 const { useServices } = require('stremio/services');
 const Stream = require('./Stream');
 const styles = require('./styles');
-const { usePlatform } = require('stremio/common');
+const { usePlatform, useProfile } = require('stremio/common');
+const { default: SeasonEpisodePicker } = require('../EpisodePicker');
 
 const ALL_ADDONS_KEY = 'ALL';
 
-const StreamsList = ({ className, video, ...props }) => {
+const StreamsList = ({ className, video, type, onEpisodeSearch, ...props }) => {
     const { t } = useTranslation();
     const { core } = useServices();
     const platform = usePlatform();
+    const profile = useProfile();
     const streamsContainerRef = React.useRef(null);
     const [selectedAddon, setSelectedAddon] = React.useState(ALL_ADDONS_KEY);
-    const onAddonSelected = React.useCallback((event) => {
+    const onAddonSelected = React.useCallback((value) => {
         streamsContainerRef.current.scrollTo({ top: 0, left: 0, behavior: platform.name === 'ios' ? 'smooth' : 'instant' });
-        setSelectedAddon(event.value);
+        setSelectedAddon(value);
     }, [platform]);
+    const showInstallAddonsButton = React.useMemo(() => {
+        return !profile || profile.auth === null || profile.auth?.user?.isNewUser === true && !video?.upcoming;
+    }, [profile, video]);
     const backButtonOnClick = React.useCallback(() => {
         if (video.deepLinks && typeof video.deepLinks.metaDetailsVideos === 'string') {
             window.location.replace(video.deepLinks.metaDetailsVideos + (
                 typeof video.season === 'number' ?
-                    `?${new URLSearchParams({'season': video.season})}`
+                    `?${new URLSearchParams({ 'season': video.season })}`
                     :
                     null
             ));
@@ -72,7 +77,6 @@ const StreamsList = ({ className, video, ...props }) => {
     }, [streamsByAddon, selectedAddon]);
     const selectableOptions = React.useMemo(() => {
         return {
-            title: 'Select Addon',
             options: [
                 {
                     value: ALL_ADDONS_KEY,
@@ -85,10 +89,15 @@ const StreamsList = ({ className, video, ...props }) => {
                     title: streamsByAddon[transportUrl].addon.manifest.name,
                 }))
             ],
-            selected: [selectedAddon],
+            value: selectedAddon,
             onSelect: onAddonSelected
         };
     }, [streamsByAddon, selectedAddon]);
+
+    const handleEpisodePicker = React.useCallback((season, episode) => {
+        onEpisodeSearch(season, episode);
+    }, [onEpisodeSearch]);
+
     return (
         <div className={classnames(className, styles['streams-list-container'])}>
             <div className={styles['select-choices-wrapper']}>
@@ -107,7 +116,7 @@ const StreamsList = ({ className, video, ...props }) => {
                 }
                 {
                     Object.keys(streamsByAddon).length > 1 ?
-                        <Multiselect
+                        <MultiselectMenu
                             {...selectableOptions}
                             className={styles['select-input-container']}
                         />
@@ -118,14 +127,38 @@ const StreamsList = ({ className, video, ...props }) => {
             {
                 props.streams.length === 0 ?
                     <div className={styles['message-container']}>
+                        {
+                            type === 'series' ?
+                                <SeasonEpisodePicker className={styles['search']} onSubmit={handleEpisodePicker} />
+                                : null
+                        }
                         <Image className={styles['image']} src={require('/images/empty.png')} alt={' '} />
-                        <div className={styles['label']}>No addons were requested for streams!</div>
+                        <div className={styles['label']}>{t('ERR_NO_ADDONS_FOR_STREAMS')}</div>
                     </div>
                     :
                     props.streams.every((streams) => streams.content.type === 'Err') ?
                         <div className={styles['message-container']}>
+                            {
+                                type === 'series' ?
+                                    <SeasonEpisodePicker className={styles['search']} onSubmit={handleEpisodePicker} />
+                                    : null
+                            }
+                            {
+                                video?.upcoming ?
+                                    <div className={styles['label']}>{t('UPCOMING')}...</div>
+                                    : null
+                            }
                             <Image className={styles['image']} src={require('/images/empty.png')} alt={' '} />
                             <div className={styles['label']}>{t('NO_STREAM')}</div>
+                            {
+                                showInstallAddonsButton ?
+                                    <Button className={styles['install-button-container']} title={t('ADDON_CATALOGUE_MORE')} href={'#/addons'}>
+                                        <Icon className={styles['icon']} name={'addons'} />
+                                        <div className={styles['label']}>{t('ADDON_CATALOGUE_MORE')}</div>
+                                    </Button>
+                                    :
+                                    null
+                            }
                         </div>
                         :
                         filteredStreams.length === 0 ?
@@ -161,13 +194,18 @@ const StreamsList = ({ className, video, ...props }) => {
                                             onClick={stream.onClick}
                                         />
                                     ))}
+                                    {
+                                        showInstallAddonsButton ?
+                                            <Button className={styles['install-button-container']} title={t('ADDON_CATALOGUE_MORE')} href={'#/addons'}>
+                                                <Icon className={styles['icon']} name={'addons'} />
+                                                <div className={styles['label']}>{t('ADDON_CATALOGUE_MORE')}</div>
+                                            </Button>
+                                            :
+                                            null
+                                    }
                                 </div>
                             </React.Fragment>
             }
-            <Button className={styles['install-button-container']} title={t('ADDON_CATALOGUE_MORE')} href={'#/addons'}>
-                <Icon className={styles['icon']} name={'addons'} />
-                <div className={styles['label']}>{ t('ADDON_CATALOGUE_MORE') }</div>
-            </Button>
         </div>
     );
 };
@@ -175,7 +213,9 @@ const StreamsList = ({ className, video, ...props }) => {
 StreamsList.propTypes = {
     className: PropTypes.string,
     streams: PropTypes.arrayOf(PropTypes.object).isRequired,
-    video: PropTypes.object
+    video: PropTypes.object,
+    type: PropTypes.string,
+    onEpisodeSearch: PropTypes.func
 };
 
 module.exports = StreamsList;

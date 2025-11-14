@@ -8,11 +8,12 @@ const { default: Icon } = require('@stremio/stremio-icons/react');
 const { Modal, useRouteFocused } = require('stremio-router');
 const { useServices } = require('stremio/services');
 const { useBinaryState } = require('stremio/common');
-const { Button, Image } = require('stremio/components');
+const { Button, Image, Checkbox } = require('stremio/components');
 const CredentialsTextInput = require('./CredentialsTextInput');
-const ConsentToggle = require('./ConsentToggle');
 const PasswordResetModal = require('./PasswordResetModal');
 const useFacebookLogin = require('./useFacebookLogin');
+const { default: useAppleLogin } = require('./useAppleLogin');
+
 const styles = require('./styles');
 
 const SIGNUP_FORM = 'signup';
@@ -23,6 +24,7 @@ const Intro = ({ queryParams }) => {
     const { t } = useTranslation();
     const routeFocused = useRouteFocused();
     const [startFacebookLogin, stopFacebookLogin] = useFacebookLogin();
+    const [startAppleLogin, stopAppleLogin] = useAppleLogin();
     const emailRef = React.useRef(null);
     const passwordRef = React.useRef(null);
     const confirmPasswordRef = React.useRef(null);
@@ -107,13 +109,40 @@ const Intro = ({ queryParams }) => {
         stopFacebookLogin();
         closeLoaderModal();
     }, []);
+    const loginWithApple = React.useCallback(() => {
+        openLoaderModal();
+        startAppleLogin()
+            .then(({ token, sub, email, name }) => {
+                core.transport.dispatch({
+                    action: 'Ctx',
+                    args: {
+                        action: 'Authenticate',
+                        args: {
+                            type: 'Apple',
+                            token,
+                            sub,
+                            email,
+                            name
+                        }
+                    }
+                });
+            })
+            .catch((error) => {
+                closeLoaderModal();
+                dispatch({ type: 'error', error: error.message });
+            });
+    }, []);
+    const cancelLoginWithApple = React.useCallback(() => {
+        stopAppleLogin();
+        closeLoaderModal();
+    }, []);
     const loginWithEmail = React.useCallback(() => {
         if (typeof state.email !== 'string' || state.email.length === 0 || !emailRef.current.validity.valid) {
-            dispatch({ type: 'error', error: 'Invalid email' });
+            dispatch({ type: 'error', error: t('INVALID_EMAIL') });
             return;
         }
         if (typeof state.password !== 'string' || state.password.length === 0) {
-            dispatch({ type: 'error', error: 'Invalid password' });
+            dispatch({ type: 'error', error: t('INVALID_PASSWORD') });
             return;
         }
         openLoaderModal();
@@ -131,26 +160,26 @@ const Intro = ({ queryParams }) => {
     }, [state.email, state.password]);
     const loginAsGuest = React.useCallback(() => {
         if (!state.termsAccepted) {
-            dispatch({ type: 'error', error: 'You must accept the Terms of Service' });
+            dispatch({ type: 'error', error: t('MUST_ACCEPT_TERMS') });
             return;
         }
         window.location = '#/';
     }, [state.termsAccepted]);
     const signup = React.useCallback(() => {
         if (typeof state.email !== 'string' || state.email.length === 0 || !emailRef.current.validity.valid) {
-            dispatch({ type: 'error', error: 'Invalid email' });
+            dispatch({ type: 'error', error: t('INVALID_EMAIL') });
             return;
         }
         if (typeof state.password !== 'string' || state.password.length === 0) {
-            dispatch({ type: 'error', error: 'Invalid password' });
+            dispatch({ type: 'error', error: t('INVALID_PASSWORD') });
             return;
         }
         if (state.password !== state.confirmPassword) {
-            dispatch({ type: 'error', error: 'Passwords do not match' });
+            dispatch({ type: 'error', error: t('PASSWORDS_NOMATCH') });
             return;
         }
         if (!state.termsAccepted) {
-            dispatch({ type: 'error', error: 'You must accept the Terms of Service' });
+            dispatch({ type: 'error', error: t('MUST_ACCEPT_TERMS') });
             return;
         }
         if (!state.privacyPolicyAccepted) {
@@ -270,10 +299,10 @@ const Intro = ({ queryParams }) => {
                     <Image className={styles['logo']} src={require('/images/logo.png')} alt={' '} />
                 </div>
                 <div className={styles['title-container']}>
-                    Freedom to Stream
+                    {t('WEBSITE_SLOGAN_NEW_NEW')}
                 </div>
                 <div className={styles['slogan-container']}>
-                    All the Video Content You Enjoy in One Place
+                    {t('WEBSITE_SLOGAN_ALL')}
                 </div>
             </div>
             <div className={styles['content-container']}>
@@ -282,7 +311,7 @@ const Intro = ({ queryParams }) => {
                         ref={emailRef}
                         className={styles['credentials-text-input']}
                         type={'email'}
-                        placeholder={'Email'}
+                        placeholder={t('EMAIL')}
                         value={state.email}
                         onChange={emailOnChange}
                         onSubmit={emailOnSubmit}
@@ -291,7 +320,7 @@ const Intro = ({ queryParams }) => {
                         ref={passwordRef}
                         className={styles['credentials-text-input']}
                         type={'password'}
-                        placeholder={'Password'}
+                        placeholder={t('PASSWORD')}
                         value={state.password}
                         onChange={passwordOnChange}
                         onSubmit={passwordOnSubmit}
@@ -303,61 +332,62 @@ const Intro = ({ queryParams }) => {
                                     ref={confirmPasswordRef}
                                     className={styles['credentials-text-input']}
                                     type={'password'}
-                                    placeholder={'Confirm Password'}
+                                    placeholder={t('PASSWORD_CONFIRM')}
                                     value={state.confirmPassword}
                                     onChange={confirmPasswordOnChange}
                                     onSubmit={confirmPasswordOnSubmit}
                                 />
-                                <ConsentToggle
+                                <Checkbox
                                     ref={termsRef}
-                                    className={styles['consent-toggle']}
-                                    label={'I have read and agree with the Stremio'}
-                                    link={'Terms and conditions'}
+                                    label={t('READ_AND_AGREE')}
+                                    link={t('TOS')}
                                     href={'https://www.stremio.com/tos'}
                                     checked={state.termsAccepted}
-                                    onToggle={toggleTermsAccepted}
+                                    onChange={toggleTermsAccepted}
                                 />
-                                <ConsentToggle
+                                <Checkbox
                                     ref={privacyPolicyRef}
-                                    className={styles['consent-toggle']}
-                                    label={'I have read and agree with the Stremio'}
-                                    link={'Privacy Policy'}
+                                    label={t('READ_AND_AGREE')}
+                                    link={t('PRIVACY_POLICY')}
                                     href={'https://www.stremio.com/privacy'}
                                     checked={state.privacyPolicyAccepted}
-                                    onToggle={togglePrivacyPolicyAccepted}
+                                    onChange={togglePrivacyPolicyAccepted}
                                 />
-                                <ConsentToggle
+                                <Checkbox
                                     ref={marketingRef}
-                                    className={styles['consent-toggle']}
-                                    label={'I agree to receive marketing communications from Stremio'}
+                                    label={t('MARKETING_AGREE')}
                                     checked={state.marketingAccepted}
-                                    onToggle={toggleMarketingAccepted}
+                                    onChange={toggleMarketingAccepted}
                                 />
                             </React.Fragment>
                             :
                             <div className={styles['forgot-password-link-container']}>
-                                <Button className={styles['forgot-password-link']} onClick={openPasswordRestModal}>Forgot password?</Button>
+                                <Button className={styles['forgot-password-link']} onClick={openPasswordRestModal}>{t('FORGOT_PASSWORD')}</Button>
                             </div>
                     }
                     {
-                        state.error.length > 0 ?
+                        state.error && state.error.length > 0 ?
                             <div ref={errorRef} className={styles['error-message']}>{state.error}</div>
                             :
                             null
                     }
                     <Button className={classnames(styles['form-button'], styles['submit-button'])} onClick={state.form === SIGNUP_FORM ? signup : loginWithEmail}>
-                        <div className={styles['label']}>{state.form === SIGNUP_FORM ? 'Sign up' : 'Log in'}</div>
+                        <div className={styles['label']}>{state.form === SIGNUP_FORM ? t('SIGN_UP') : t('LOG_IN')}</div>
                     </Button>
                 </div>
                 <div className={styles['options-container']}>
                     <Button className={classnames(styles['form-button'], styles['facebook-button'])} onClick={loginWithFacebook}>
                         <Icon className={styles['icon']} name={'facebook'} />
-                        <div className={styles['label']}>Continue with Facebook</div>
+                        <div className={styles['label']}>{t('FB_LOGIN')}</div>
+                    </Button>
+                    <Button className={classnames(styles['form-button'], styles['apple-button'])} onClick={loginWithApple}>
+                        <Icon className={styles['icon']} name={'macos'} />
+                        <div className={styles['label']}>{t('APPLE_LOGIN')}</div>
                     </Button>
                     {
                         state.form === SIGNUP_FORM ?
                             <Button className={classnames(styles['form-button'], styles['login-form-button'])} onClick={switchFormOnClick}>
-                                <div className={styles['label']}>LOG IN</div>
+                                <div className={styles['label']}>{t('LOG_IN')}</div>
                             </Button>
                             :
                             null
@@ -365,7 +395,7 @@ const Intro = ({ queryParams }) => {
                     {
                         state.form === LOGIN_FORM ?
                             <Button className={classnames(styles['form-button'], styles['signup-form-button'])} onClick={switchFormOnClick}>
-                                <div className={styles['label']}>SIGN UP WITH EMAIL</div>
+                                <div className={styles['label']}>{t('SIGN_UP_EMAIL')}</div>
                             </Button>
                             :
                             null
@@ -373,7 +403,7 @@ const Intro = ({ queryParams }) => {
                     {
                         state.form === SIGNUP_FORM ?
                             <Button className={classnames(styles['form-button'], styles['guest-login-button'])} onClick={loginAsGuest}>
-                                <div className={styles['label']}>GUEST LOGIN</div>
+                                <div className={styles['label']}>{t('GUEST_LOGIN')}</div>
                             </Button>
                             :
                             null
@@ -391,8 +421,8 @@ const Intro = ({ queryParams }) => {
                     <Modal className={styles['loading-modal-container']}>
                         <div className={styles['loader-container']}>
                             <Icon className={styles['icon']} name={'person'} />
-                            <div className={styles['label']}>Authenticating...</div>
-                            <Button className={styles['button']} onClick={cancelLoginWithFacebook}>
+                            <div className={styles['label']}>{t('AUTHENTICATING')}</div>
+                            <Button className={styles['button']} onClick={cancelLoginWithFacebook && cancelLoginWithApple}>
                                 {t('BUTTON_CANCEL')}
                             </Button>
                         </div>

@@ -14,11 +14,15 @@ type Props = {
     seriesInfo: SeriesInfo;
     metaItem: MetaItem;
     closeSideDrawer: () => void;
+    selected: string;
+    transitionEnded: boolean;
 };
 
-const SideDrawer = memo(forwardRef<HTMLDivElement, Props>(({ seriesInfo, className, closeSideDrawer, ...props }: Props, ref) => {
+const SideDrawer = memo(forwardRef<HTMLDivElement, Props>(({ seriesInfo, className, closeSideDrawer, selected, ...props }: Props, ref) => {
     const { core } = useServices();
     const [season, setSeason] = useState<number>(seriesInfo?.season);
+    const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+
     const metaItem = useMemo(() => {
         return seriesInfo ?
             {
@@ -47,6 +51,10 @@ const SideDrawer = memo(forwardRef<HTMLDivElement, Props>(({ seriesInfo, classNa
         setSeason(parseInt(event.value));
     }, []);
 
+    const seasonWatched = React.useMemo(() => {
+        return videos.every((video) => video.watched);
+    }, [videos]);
+
     const onMarkVideoAsWatched = useCallback((video: Video, watched: boolean) => {
         core.transport.dispatch({
             action: 'Player',
@@ -57,12 +65,26 @@ const SideDrawer = memo(forwardRef<HTMLDivElement, Props>(({ seriesInfo, classNa
         });
     }, []);
 
+    const onMarkSeasonAsWatched = (season: number, watched: boolean) => {
+        core.transport.dispatch({
+            action: 'Player',
+            args: {
+                action: 'MarkSeasonAsWatched',
+                args: [season, !watched]
+            }
+        });
+    };
+
     const onMouseDown = (event: React.MouseEvent) => {
         event.stopPropagation();
     };
 
+    const onTransitionEnd = useCallback(() => {
+        setSelectedVideoId(selected);
+    }, [selected]);
+
     return (
-        <div ref={ref} className={classNames(styles['side-drawer'], className)} onMouseDown={onMouseDown}>
+        <div ref={ref} className={classNames(styles['side-drawer'], className)} onMouseDown={onMouseDown} onTransitionEnd={onTransitionEnd}>
             <div className={styles['close-button']} onClick={closeSideDrawer}>
                 <Icon className={styles['icon']} name={'chevron-forward'} />
             </div>
@@ -95,14 +117,18 @@ const SideDrawer = memo(forwardRef<HTMLDivElement, Props>(({ seriesInfo, classNa
                                     id={video.id}
                                     title={video.title}
                                     thumbnail={video.thumbnail}
+                                    season={video.season}
                                     episode={video.episode}
                                     released={video.released}
                                     upcoming={video.upcoming}
                                     watched={video.watched}
+                                    seasonWatched={seasonWatched}
                                     progress={video.progress}
                                     deepLinks={video.deepLinks}
                                     scheduled={video.scheduled}
+                                    selected={video.id === selectedVideoId}
                                     onMarkVideoAsWatched={onMarkVideoAsWatched}
+                                    onMarkSeasonAsWatched={onMarkSeasonAsWatched}
                                 />
                             ))}
                         </div>

@@ -6,10 +6,12 @@ const { useTranslation } = require('react-i18next');
 const { Router } = require('stremio-router');
 const { Core, Shell, Chromecast, DragAndDrop, KeyboardShortcuts, ServicesProvider } = require('stremio/services');
 const { NotFound } = require('stremio/routes');
-const { PlatformProvider, ToastProvider, TooltipProvider, CONSTANTS, withCoreSuspender } = require('stremio/common');
+const { FileDropProvider, PlatformProvider, ToastProvider, TooltipProvider, ShortcutsProvider, CONSTANTS, withCoreSuspender, useShell, useBinaryState } = require('stremio/common');
 const ServicesToaster = require('./ServicesToaster');
 const DeepLinkHandler = require('./DeepLinkHandler');
 const SearchParamsHandler = require('./SearchParamsHandler');
+const { default: UpdaterBanner } = require('./UpdaterBanner');
+const { default: ShortcutsModal } = require('./ShortcutsModal');
 const ErrorDialog = require('./ErrorDialog');
 const withProtectedRoutes = require('./withProtectedRoutes');
 const routerViewsConfig = require('./routerViewsConfig');
@@ -19,6 +21,7 @@ const RouterWithProtectedRoutes = withCoreSuspender(withProtectedRoutes(Router))
 
 const App = () => {
     const { i18n } = useTranslation();
+    const shell = useShell();
     const onPathNotMatch = React.useCallback(() => {
         return NotFound;
     }, []);
@@ -36,6 +39,14 @@ const App = () => {
         };
     }, []);
     const [initialized, setInitialized] = React.useState(false);
+    const [shortcutModalOpen,, closeShortcutsModal, toggleShortcutModal] = useBinaryState(false);
+
+    const onShortcut = React.useCallback((name) => {
+        if (name === 'shortcuts') {
+            toggleShortcutModal();
+        }
+    }, [toggleShortcutModal]);
+
     React.useEffect(() => {
         let prevPath = window.location.hash.slice(1);
         const onLocationHashChange = () => {
@@ -96,6 +107,32 @@ const App = () => {
             services.chromecast.off('stateChanged', onChromecastStateChange);
         };
     }, []);
+
+    // Handle shell events
+    React.useEffect(() => {
+        const onOpenMedia = (data) => {
+            try {
+                const { protocol, hostname, pathname, searchParams } = new URL(data);
+                if (protocol === CONSTANTS.PROTOCOL) {
+                    if (hostname.length) {
+                        const transportUrl = `https://${hostname}${pathname}`;
+                        window.location.href = `#/addons?addon=${encodeURIComponent(transportUrl)}`;
+                    } else {
+                        window.location.href = `#${pathname}?${searchParams.toString()}`;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to open media:', e);
+            }
+        };
+
+        shell.on('open-media', onOpenMedia);
+
+        return () => {
+            shell.off('open-media', onOpenMedia);
+        };
+    }, []);
+
     React.useEffect(() => {
         const onCoreEvent = ({ event, args }) => {
             switch (event) {
@@ -103,6 +140,11 @@ const App = () => {
                     if (args && args.settings && typeof args.settings.interfaceLanguage === 'string') {
                         i18n.changeLanguage(args.settings.interfaceLanguage);
                     }
+
+                    if (args?.settings?.quitOnClose && shell.windowClosed) {
+                        shell.send('quit');
+                    }
+
                     break;
                 }
             }
@@ -110,6 +152,10 @@ const App = () => {
         const onCtxState = (state) => {
             if (state && state.profile && state.profile.settings && typeof state.profile.settings.interfaceLanguage === 'string') {
                 i18n.changeLanguage(state.profile.settings.interfaceLanguage);
+            }
+
+            if (state?.profile?.settings?.quitOnClose && shell.windowClosed) {
+                shell.send('quit');
             }
         };
         const onWindowFocus = () => {
@@ -122,7 +168,8 @@ const App = () => {
             services.core.transport.dispatch({
                 action: 'Ctx',
                 args: {
-                    action: 'PullUserFromAPI'
+                    action: 'PullUserFromAPI',
+                    args: {}
                 }
             });
             services.core.transport.dispatch({
@@ -145,7 +192,7 @@ const App = () => {
             services.core.transport
                 .getState('ctx')
                 .then(onCtxState)
-                .catch((e) => console.error(e));
+                .catch(console.error);
         }
         return () => {
             if (services.core.active) {
@@ -153,7 +200,7 @@ const App = () => {
                 services.core.transport.off('CoreEvent', onCoreEvent);
             }
         };
-    }, [initialized]);
+    }, [initialized, shell.windowClosed]);
     return (
         <React.StrictMode>
             <ServicesProvider services={services}>
@@ -165,14 +212,22 @@ const App = () => {
                             <PlatformProvider>
                                 <ToastProvider className={styles['toasts-container']}>
                                     <TooltipProvider className={styles['tooltip-container']}>
-                                        <ServicesToaster />
-                                        <DeepLinkHandler />
-                                        <SearchParamsHandler />
-                                        <RouterWithProtectedRoutes
-                                            className={styles['router']}
-                                            viewsConfig={routerViewsConfig}
-                                            onPathNotMatch={onPathNotMatch}
-                                        />
+                                        <FileDropProvider className={styles['file-drop-container']}>
+                                            <ShortcutsProvider onShortcut={onShortcut}>
+                                                {
+                                                    shortcutModalOpen && <ShortcutsModal onClose={closeShortcutsModal}/>
+                                                }
+                                                <ServicesToaster />
+                                                <DeepLinkHandler />
+                                                <SearchParamsHandler />
+                                                <UpdaterBanner className={styles['updater-banner-container']} />
+                                                <RouterWithProtectedRoutes
+                                                    className={styles['router']}
+                                                    viewsConfig={routerViewsConfig}
+                                                    onPathNotMatch={onPathNotMatch}
+                                                />
+                                            </ShortcutsProvider>
+                                        </FileDropProvider>
                                     </TooltipProvider>
                                 </ToastProvider>
                             </PlatformProvider>

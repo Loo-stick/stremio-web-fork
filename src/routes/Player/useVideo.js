@@ -8,7 +8,7 @@ const events = new EventEmitter();
 
 const useVideo = () => {
     const video = React.useRef(null);
-    const containerElement = React.useRef(null);
+    const containerRef = React.useRef(null);
 
     const [state, setState] = React.useState({
         manifest: null,
@@ -42,11 +42,11 @@ const useVideo = () => {
     });
 
     const dispatch = (action, options) => {
-        if (video.current && containerElement.current) {
+        if (video.current && containerRef.current) {
             try {
                 video.current.dispatch(action, {
                     ...options,
-                    containerElement: containerElement.current,
+                    containerElement: containerRef.current,
                 });
             } catch (error) {
                 console.error('Video:', error);
@@ -79,8 +79,29 @@ const useVideo = () => {
         });
     };
 
+    const addLocalSubtitles = (filename, buffer) => {
+        dispatch({
+            type: 'command',
+            commandName: 'addLocalSubtitles',
+            commandArgs: {
+                filename,
+                buffer,
+            },
+        });
+    };
+
     const setProp = (name, value) => {
         dispatch({ type: 'setProp', propName: name, propValue: value });
+    };
+
+    const setSubtitlesTrack = (id) => {
+        setProp('selectedSubtitlesTrackId', id);
+        setProp('selectedExtraSubtitlesTrackId', null);
+    };
+
+    const setExtraSubtitlesTrack = (id) => {
+        setProp('selectedSubtitlesTrackId', null);
+        setProp('selectedExtraSubtitlesTrackId', id);
     };
 
     const onError = (error) => {
@@ -97,6 +118,10 @@ const useVideo = () => {
 
     const onExtraSubtitlesTrackLoaded = (track) => {
         events.emit('extraSubtitlesTrackLoaded', track);
+    };
+
+    const onExtraSubtitlesTrackAdded = (track) => {
+        events.emit('extraSubtitlesTrackAdded', track);
     };
 
     const onPropChanged = (name, value) => {
@@ -125,18 +150,30 @@ const useVideo = () => {
         video.current.on('implementationChanged', onImplementationChanged);
         video.current.on('subtitlesTrackLoaded', onSubtitlesTrackLoaded);
         video.current.on('extraSubtitlesTrackLoaded', onExtraSubtitlesTrackLoaded);
+        video.current.on('extraSubtitlesTrackAdded', onExtraSubtitlesTrackAdded);
 
-        return () => video.current.destroy();
+        return () => {
+            if (video.current) {
+                try {
+                    video.current.destroy();
+                } catch (err) {
+                    console.error('Error destroying video:', err);
+                }
+            }
+        };
     }, []);
 
     return {
         events,
-        containerElement,
+        containerRef,
         state,
         load,
         unload,
         addExtraSubtitlesTracks,
+        addLocalSubtitles,
         setProp,
+        setSubtitlesTrack,
+        setExtraSubtitlesTrack,
     };
 };
 

@@ -36,6 +36,12 @@ function DragAndDrop({ core }) {
                     }
                     break;
                 }
+                case 'application/x-subrip':
+                    break;
+                case 'text/vtt':
+                    break;
+                case '':
+                    break;
                 default: {
                     events.emit('error', {
                         message: 'Unsupported file',

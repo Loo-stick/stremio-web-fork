@@ -51,14 +51,30 @@
     }
 }
 
+@media @phone-landscape {
+    .action-button-container {
+        .label-container {
+            display: none;
+        }
+    }
+}
+
 @media only screen and (max-width: @minimum) {
     .action-button-container {
         flex-direction: row;
         padding: 0 1rem;
 
         .icon-container {
-            height: 2rem;
             width: 2rem;
+
+            .icon {
+                width: 2rem;
+                height: 2rem;
+            }
+        }
+
+        .label-container {
+            display: none;
         }
     }
 }

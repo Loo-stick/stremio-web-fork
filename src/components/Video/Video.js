@@ -1,19 +1,23 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 const React = require('react');
+const { useTranslation } = require('react-i18next');
 const PropTypes = require('prop-types');
 const classnames = require('classnames');
-const { t } = require('i18next');
 const { useRouteFocused } = require('stremio-router');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const { Button, Image, Popup } = require('stremio/components');
 const useBinaryState = require('stremio/common/useBinaryState');
+const useProfile = require('stremio/common/useProfile');
 const VideoPlaceholder = require('./VideoPlaceholder');
 const styles = require('./styles');
 
-const Video = ({ className, id, title, thumbnail, episode, released, upcoming, watched, progress, scheduled, deepLinks, onMarkVideoAsWatched, ...props }) => {
+const Video = ({ className, id, title, thumbnail, season, episode, released, upcoming, watched, progress, scheduled, seasonWatched, selected, deepLinks, onMarkVideoAsWatched, onMarkSeasonAsWatched, ...props }) => {
     const routeFocused = useRouteFocused();
+    const profile = useProfile();
+    const { t } = useTranslation();
     const [menuOpen, , closeMenu, toggleMenu] = useBinaryState(false);
+
     const popupLabelOnMouseUp = React.useCallback((event) => {
         if (!event.nativeEvent.togglePopupPrevented) {
             if (event.nativeEvent.ctrlKey || event.nativeEvent.button === 2) {
@@ -50,6 +54,12 @@ const Video = ({ className, id, title, thumbnail, episode, released, upcoming, w
         closeMenu();
         onMarkVideoAsWatched({ id, released }, watched);
     }, [id, released, watched]);
+    const toggleWatchedSeasonOnClick = React.useCallback((event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeMenu();
+        onMarkSeasonAsWatched(season, seasonWatched);
+    }, [season, seasonWatched, onMarkSeasonAsWatched]);
     const videoButtonOnClick = React.useCallback(() => {
         if (deepLinks) {
             if (typeof deepLinks.player === 'string') {
@@ -59,14 +69,24 @@ const Video = ({ className, id, title, thumbnail, episode, released, upcoming, w
             }
         }
     }, [deepLinks]);
-    const renderLabel = React.useMemo(() => function renderLabel({ className, id, title, thumbnail, episode, released, upcoming, watched, progress, scheduled, children, ...props }) {
+    const renderLabel = React.useMemo(() => function renderLabel({ className, id, title, thumbnail, episode, released, upcoming, watched, progress, scheduled, children, ref, ...props }) {
+        const blurThumbnail = profile.settings.hideSpoilers && season && episode && !watched;
+
+        React.useEffect(() => {
+            selected && !watched && ref.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'start'
+            });
+        }, [selected]);
+
         return (
-            <Button {...props} className={classnames(className, styles['video-container'])} title={title}>
+            <Button {...props} ref={ref} className={classnames(className, styles['video-container'])} title={title}>
                 {
                     typeof thumbnail === 'string' && thumbnail.length > 0 ?
                         <div className={styles['thumbnail-container']}>
                             <Image
-                                className={styles['thumbnail']}
+                                className={classnames(styles['thumbnail'], { [styles['blurred']]: blurThumbnail })}
                                 src={thumbnail}
                                 alt={' '}
                                 renderFallback={() => (
@@ -98,12 +118,12 @@ const Video = ({ className, id, title, thumbnail, episode, released, upcoming, w
                         {
                             released instanceof Date && !isNaN(released.getTime()) ?
                                 <div className={styles['released-container']}>
-                                    {released.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                    {released.toLocaleString(profile.settings.interfaceLanguage, { year: 'numeric', month: 'short', day: 'numeric' })}
                                 </div>
                                 :
                                 scheduled ?
-                                    <div className={styles['released-container']} title={'To be announced'}>
-                                        TBA
+                                    <div className={styles['released-container']} title={t('TBA')}>
+                                        {t('TBA')}
                                     </div>
                                     :
                                     null
@@ -112,7 +132,7 @@ const Video = ({ className, id, title, thumbnail, episode, released, upcoming, w
                             {
                                 upcoming && !watched ?
                                     <div className={styles['upcoming-container']}>
-                                        <div className={styles['flag-label']}>Upcoming</div>
+                                        <div className={styles['flag-label']}>{t('UPCOMING')}</div>
                                     </div>
                                     :
                                     null
@@ -121,7 +141,7 @@ const Video = ({ className, id, title, thumbnail, episode, released, upcoming, w
                                 watched ?
                                     <div className={styles['watched-container']}>
                                         <Icon className={styles['flag-icon']} name={'eye'} />
-                                        <div className={styles['flag-label']}>Watched</div>
+                                        <div className={styles['flag-label']}>{t('CTX_WATCHED')}</div>
                                     </div>
                                     :
                                     null
@@ -132,19 +152,22 @@ const Video = ({ className, id, title, thumbnail, episode, released, upcoming, w
                 {children}
             </Button>
         );
-    }, []);
+    }, [selected]);
     const renderMenu = React.useMemo(() => function renderMenu() {
         return (
             <div className={styles['context-menu-content']} onPointerDown={popupMenuOnPointerDown} onContextMenu={popupMenuOnContextMenu} onClick={popupMenuOnClick} onKeyDown={popupMenuOnKeyDown}>
-                <Button className={styles['context-menu-option-container']} title={'Watch'}>
+                <Button className={styles['context-menu-option-container']} title={t('CTX_WATCH')}>
                     <div className={styles['context-menu-option-label']}>{t('CTX_WATCH')}</div>
                 </Button>
-                <Button className={styles['context-menu-option-container']} title={watched ? 'Mark as non-watched' : 'Mark as watched'} onClick={toggleWatchedOnClick}>
+                <Button className={styles['context-menu-option-container']} title={watched ? t('CTX_MARK_NON_WATCHED') : t('CTX_MARK_WATCHED')} onClick={toggleWatchedOnClick}>
                     <div className={styles['context-menu-option-label']}>{watched ? t('CTX_MARK_NON_WATCHED') : t('CTX_MARK_WATCHED')}</div>
+                </Button>
+                <Button className={styles['context-menu-option-container']} title={seasonWatched ? t('CTX_UNMARK_REST') : t('CTX_MARK_REST')} onClick={toggleWatchedSeasonOnClick}>
+                    <div className={styles['context-menu-option-label']}>{seasonWatched ? t('CTX_UNMARK_REST') : t('CTX_MARK_REST')}</div>
                 </Button>
             </div>
         );
-    }, [watched, toggleWatchedOnClick]);
+    }, [watched, seasonWatched, toggleWatchedOnClick]);
     React.useEffect(() => {
         if (!routeFocused) {
             closeMenu();
@@ -182,17 +205,21 @@ Video.propTypes = {
     id: PropTypes.string,
     title: PropTypes.string,
     thumbnail: PropTypes.string,
+    season: PropTypes.number,
     episode: PropTypes.number,
     released: PropTypes.instanceOf(Date),
     upcoming: PropTypes.bool,
     watched: PropTypes.bool,
     progress: PropTypes.number,
     scheduled: PropTypes.bool,
+    seasonWatched: PropTypes.bool,
+    selected: PropTypes.bool,
     deepLinks: PropTypes.shape({
         metaDetailsStreams: PropTypes.string,
         player: PropTypes.string
     }),
     onMarkVideoAsWatched: PropTypes.func,
+    onMarkSeasonAsWatched: PropTypes.func,
 };
 
 module.exports = Video;
