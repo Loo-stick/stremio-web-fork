@@ -92,6 +92,22 @@ const usePlayerOptions = (profile: Profile) => {
         }
     }), [profile.settings]);
 
+    const assSubtitlesStylingToggle = useMemo(() => ({
+        checked: profile.settings.assSubtitlesStyling,
+        onClick: () => {
+            core.transport.dispatch({
+                action: 'Ctx',
+                args: {
+                    action: 'UpdateSettings',
+                    args: {
+                        ...profile.settings,
+                        assSubtitlesStyling: !profile.settings.assSubtitlesStyling
+                    }
+                }
+            });
+        }
+    }), [profile.settings]);
+
     const subtitlesOutlineColorInput = useMemo(() => ({
         value: profile.settings.subtitlesOutlineColor,
         onChange: (value: string) => {
@@ -341,6 +357,7 @@ const usePlayerOptions = (profile: Profile) => {
         subtitlesTextColorInput,
         subtitlesBackgroundColorInput,
         subtitlesOutlineColorInput,
+        assSubtitlesStylingToggle,
         audioLanguageSelect,
         surroundSoundToggle,
         seekTimeDurationSelect,
