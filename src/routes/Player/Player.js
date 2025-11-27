@@ -107,7 +107,7 @@ const Player = ({ urlParams, queryParams }) => {
 
     const handleNextVideoNavigation = React.useCallback((deepLinks, bingeWatching, ended) => {
         if (ended) {
-            if (profile.settings.bingeWatching) {
+            if (bingeWatching) {
                 if (deepLinks.player) {
                     isNavigating.current = true;
                     window.location.replace(deepLinks.player);
