@@ -20,7 +20,6 @@ const Settings = () => {
     const profile = useProfile();
     const platform = usePlatform();
     const streamingServer = useStreamingServer();
-    const isScrollingRef = useRef(false);
 
     const sectionsContainerRef = useRef<HTMLDivElement>(null);
     const generalSectionRef = useRef<HTMLDivElement>(null);
@@ -38,51 +37,26 @@ const Settings = () => {
     const [selectedSectionId, setSelectedSectionId] = useState(SECTIONS.GENERAL);
 
     const updateSelectedSectionId = useCallback(() => {
-        if (isScrollingRef.current) return;
-
         const container = sectionsContainerRef.current;
-        if (!container) return;
-
-        const containerRect = container.getBoundingClientRect();
-        const tolerance = 20;
-
-        if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) {
-            setSelectedSectionId(sections[sections.length - 1].id);
-        } else {
-            for (let i = sections.length - 1; i >= 0; i--) {
-                const section = sections[i].ref.current;
-                if (section) {
-                    const sectionRect = section.getBoundingClientRect();
-                    if (sectionRect.top <= containerRect.top + tolerance) {
-                        setSelectedSectionId(sections[i].id);
-                        break;
-                    }
-                }
+        for (const section of sections) {
+            const sectionContainer = section.ref.current;
+            if (sectionContainer && (sectionContainer.offsetTop + container!.offsetTop) < container!.scrollTop + 50) {
+                setSelectedSectionId(section.id);
             }
         }
-    }, [sections]);
+    }, []);
 
     const onMenuSelect = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-        const sectionId = event.currentTarget.dataset.section;
-        const section = sections.find((s) => s.id === sectionId);
+        const section = sections.find((section) => {
+            return section.id === event.currentTarget.dataset.section;
+        });
+
         const container = sectionsContainerRef.current;
-
-        if (section && section.ref.current && container) {
-            isScrollingRef.current = true;
-            setSelectedSectionId(section.id);
-
-            const top = section.ref.current.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
-
-            container.scrollTo({
-                top,
-                behavior: 'smooth'
-            });
-
-            setTimeout(() => {
-                isScrollingRef.current = false;
-            }, 1000);
-        }
-    }, [sections]);
+        section && container!.scrollTo({
+            top: section.ref.current!.offsetTop - container!.offsetTop,
+            behavior: 'smooth'
+        });
+    }, []);
 
     const onContainerScroll = useCallback(throttle(() => {
         updateSelectedSectionId();
