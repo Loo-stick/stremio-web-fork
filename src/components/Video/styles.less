@@ -178,9 +178,17 @@
     }
 
     &.selected {
-        border-color: var(--primary-accent-color);
+        animation: border 3s ease-in-out forwards;
     }
 
+    @keyframes border {
+        0% {
+            border: 0.15rem solid var(--primary-accent-color);
+        }
+        100% {
+            border: 0.15rem solid transparent;
+        }
+    }
 
     .context-menu-container {
         max-width: calc(90% - 1.5rem);
