@@ -228,9 +228,9 @@ module.exports = (env, argv) => ({
             }),
         new CopyWebpackPlugin({
             patterns: [
-                { from: 'favicons', to: 'favicons' },
-                { from: 'images', to: 'images' },
-                { from: 'screenshots/*.webp', to: './' },
+                { from: 'assets/favicons', to: 'favicons' },
+                { from: 'assets/images', to: 'images' },
+                { from: 'assets/screenshots/*.webp', to: 'screenshots/[name][ext]' },
                 { from: '.well-known', to: '.well-known' },
                 { from: 'manifest.json', to: 'manifest.json' },
             ]
