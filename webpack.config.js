@@ -154,7 +154,7 @@ module.exports = (env, argv) => ({
                 exclude: /node_modules/,
                 type: 'asset/resource',
                 generator: {
-                    filename: `${COMMIT_HASH}/fonts/[name][ext][query]`
+                    filename: 'fonts/[name][ext][query]'
                 }
             },
             {
