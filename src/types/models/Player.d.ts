@@ -30,6 +30,20 @@ type SeriesInfo = {
     season: number,
 };
 
+type SubtitlesTrackState = {
+    id: string,
+    embedded: boolean,
+};
+
+type AudioTrackState = {
+    id: string,
+};
+
+type StreamState = {
+    subtitleTrack?: SubtitlesTrackState,
+    audioTrack?: AudioTrackState,
+};
+
 type Player = {
     addon: Addon | null,
     libraryItem: LibraryItemPlayer | null,
@@ -42,6 +56,7 @@ type Player = {
         subtitlesPath: ResourceRequestPath,
     } | null,
     seriesInfo: SeriesInfo | null,
+    streamState: StreamState | null,
     subtitles: Subtitle[],
     title: string | null,
 };

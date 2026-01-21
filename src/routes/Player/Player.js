@@ -29,6 +29,9 @@ const styles = require('./styles');
 const Video = require('./Video');
 const { default: Indicator } = require('./Indicator/Indicator');
 
+const findTrackByLang = (tracks, lang) => tracks.find((track) => track.lang === lang || langs.where('1', track.lang)?.[2] === lang);
+const findTrackById = (tracks, id) => tracks.find((track) => track.id === id);
+
 const Player = ({ urlParams, queryParams }) => {
     const { t } = useTranslation();
     const services = useServices();
@@ -37,7 +40,7 @@ const Player = ({ urlParams, queryParams }) => {
         return queryParams.has('forceTranscoding');
     }, [queryParams]);
     const profile = useProfile();
-    const [player, videoParamsChanged, timeChanged, seek, pausedChanged, ended, nextVideo] = usePlayer(urlParams);
+    const [player, videoParamsChanged, streamStateChanged, timeChanged, seek, pausedChanged, ended, nextVideo] = usePlayer(urlParams);
     const [settings, updateSettings] = useSettings();
     const streamingServer = useStreamingServer();
     const statistics = useStatistics(player, streamingServer);
@@ -224,15 +227,32 @@ const Player = ({ urlParams, queryParams }) => {
 
     const onSubtitlesTrackSelected = React.useCallback((id) => {
         video.setSubtitlesTrack(id);
-    }, []);
+        streamStateChanged({
+            subtitleTrack: {
+                id,
+                embedded: true,
+            },
+        });
+    }, [streamStateChanged]);
 
     const onExtraSubtitlesTrackSelected = React.useCallback((id) => {
         video.setExtraSubtitlesTrack(id);
-    }, []);
+        streamStateChanged({
+            subtitleTrack: {
+                id,
+                embedded: false,
+            },
+        });
+    }, [streamStateChanged]);
 
     const onAudioTrackSelected = React.useCallback((id) => {
         video.setProp('selectedAudioTrackId', id);
-    }, []);
+        streamStateChanged({
+            audioTrack: {
+                id,
+            },
+        });
+    }, [streamStateChanged]);
 
     const onExtraSubtitlesDelayChanged = React.useCallback((delay) => {
         video.setProp('extraSubtitlesDelay', delay);
@@ -444,41 +464,49 @@ const Player = ({ urlParams, queryParams }) => {
         }
     }, [player.nextVideo, video.state.time, video.state.duration]);
 
+    // Auto subtitles track selection
     React.useEffect(() => {
         if (!defaultSubtitlesSelected.current) {
-            const findTrackByLang = (tracks, lang) => tracks.find((track) => track.lang === lang || langs.where('1', track.lang)?.[2] === lang);
-
             if (settings.subtitlesLanguage === null) {
-                onSubtitlesTrackSelected(null);
-                onExtraSubtitlesTrackSelected(null);
+                video.setSubtitlesTrack(null);
+                video.setExtraSubtitlesTrack(null);
                 defaultSubtitlesSelected.current = true;
                 return;
             }
 
-            const subtitlesTrack = findTrackByLang(video.state.subtitlesTracks, settings.subtitlesLanguage);
-            const extraSubtitlesTrack = findTrackByLang(video.state.extraSubtitlesTracks, settings.subtitlesLanguage);
+            const savedTrackId = player.streamState?.subtitleTrack?.id;
+            const subtitlesTrack = savedTrackId ?
+                findTrackById(video.state.subtitlesTracks, savedTrackId) :
+                findTrackByLang(video.state.subtitlesTracks, settings.subtitlesLanguage);
+
+            const extraSubtitlesTrack = savedTrackId ?
+                findTrackById(video.state.extraSubtitlesTracks, savedTrackId) :
+                findTrackByLang(video.state.extraSubtitlesTracks, settings.subtitlesLanguage);
 
             if (subtitlesTrack && subtitlesTrack.id) {
-                onSubtitlesTrackSelected(subtitlesTrack.id);
+                video.setSubtitlesTrack(subtitlesTrack.id);
                 defaultSubtitlesSelected.current = true;
             } else if (extraSubtitlesTrack && extraSubtitlesTrack.id) {
-                onExtraSubtitlesTrackSelected(extraSubtitlesTrack.id);
+                video.setExtraSubtitlesTrack(extraSubtitlesTrack.id);
                 defaultSubtitlesSelected.current = true;
             }
         }
-    }, [video.state.subtitlesTracks, video.state.extraSubtitlesTracks]);
+    }, [video.state.subtitlesTracks, video.state.extraSubtitlesTracks, player.streamState]);
 
+    // Auto audio track selection
     React.useEffect(() => {
         if (!defaultAudioTrackSelected.current) {
-            const findTrackByLang = (tracks, lang) => tracks.find((track) => track.lang === lang || langs.where('1', track.lang)?.[2] === lang);
-            const audioTrack = findTrackByLang(video.state.audioTracks, settings.audioLanguage);
+            const savedTrackId = player.streamState?.audioTrack?.id;
+            const audioTrack = savedTrackId ?
+                findTrackById(video.state.audioTracks, savedTrackId) :
+                findTrackByLang(video.state.audioTracks, settings.audioLanguage);
 
             if (audioTrack && audioTrack.id) {
-                onAudioTrackSelected(audioTrack.id);
+                video.setProp('selectedAudioTrackId', audioTrack.id);
                 defaultAudioTrackSelected.current = true;
             }
         }
-    }, [video.state.audioTracks]);
+    }, [video.state.audioTracks, player.streamState]);
 
     React.useEffect(() => {
         defaultSubtitlesSelected.current = false;
