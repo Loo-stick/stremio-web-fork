@@ -4,6 +4,10 @@
         "codes": ["ar-AR", "ara"]
     },
     {
+        "name": "Беларуская",
+        "codes": ["be-BY", "bel"]
+    },
+    {
         "name": "български език",
         "codes": ["bg-BG", "bul"]
     },
@@ -13,7 +17,7 @@
     },
     {
         "name": "català",
-        "codes": ["ca-CA", "cat"]
+        "codes": ["ca-ES", "cat"]
     },
     {
         "name": "čeština",
@@ -42,6 +46,10 @@
     {
         "name": "español",
         "codes": ["es-ES", "spa"]
+    },
+    {
+        "name": "Eesti",
+        "codes": ["et-EE", "est"]
     },
     {
         "name": "euskara",
@@ -112,6 +120,10 @@
         "codes": ["nn-NO", "nno"]
     },
     {
+        "name": "ਪੰਜਾਬੀ",
+        "codes": ["pa-IN", "pan"]
+    },
+    {
         "name": "język polski",
         "codes": ["pl-PL", "pol"]
     },
@@ -152,12 +164,20 @@
         "codes": ["te-IN", "tel"]
     },
     {
+        "name": "தமிழ்",
+        "codes": ["tl-TM", "tam"]
+    },
+    {
         "name": "Türkçe",
         "codes": ["tr-TR", "tur"]
     },
     {
         "name": "українська мова",
         "codes": ["uk-UA", "ukr"]
+    },
+    {
+        "name": "اُرْدُو",
+        "codes": ["ur-PK", "urd"]
     },
     {
         "name": "Tiếng Việt",
