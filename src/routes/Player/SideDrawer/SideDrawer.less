@@ -3,6 +3,7 @@
 @import (reference) '~stremio/common/screen-sizes.less';
 
 :import('~stremio/components/MetaPreview/styles.less') {
+    description-container: description-container;
     action-buttons-container: action-buttons-container;
 }
 
@@ -57,9 +58,14 @@
     .info {
         padding: @padding;
         overflow-y: auto;
-        flex: 1;
 
         .side-drawer-meta-preview {
+            .description-container {
+                display: -webkit-box;
+                -webkit-line-clamp: 4;
+                -webkit-box-orient: vertical;
+            }
+
             .action-buttons-container {
                 padding-top: 0;
                 margin-top: 0;
@@ -91,10 +97,6 @@
 @media @phone-landscape {
     .side-drawer {
         max-width: 50dvw;
-
-        .info {
-            flex: 1;
-        }
     }
 }
 
