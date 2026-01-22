@@ -41,7 +41,7 @@ const Player = ({ urlParams, queryParams }) => {
     }, [queryParams]);
     const profile = useProfile();
     const [player, videoParamsChanged, streamStateChanged, timeChanged, seek, pausedChanged, ended, nextVideo] = usePlayer(urlParams);
-    const [settings, updateSettings] = useSettings();
+    const [settings] = useSettings();
     const streamingServer = useStreamingServer();
     const statistics = useStatistics(player, streamingServer);
     const video = useVideo();
@@ -256,7 +256,8 @@ const Player = ({ urlParams, queryParams }) => {
 
     const onExtraSubtitlesDelayChanged = React.useCallback((delay) => {
         video.setProp('extraSubtitlesDelay', delay);
-    }, []);
+        streamStateChanged({ subtitleDelay: delay });
+    }, [streamStateChanged]);
 
     const onIncreaseSubtitlesDelay = React.useCallback(() => {
         const delay = video.state.extraSubtitlesDelay + 250;
@@ -269,8 +270,10 @@ const Player = ({ urlParams, queryParams }) => {
     }, [video.state.extraSubtitlesDelay, onExtraSubtitlesDelayChanged]);
 
     const onSubtitlesSizeChanged = React.useCallback((size) => {
-        updateSettings({ subtitlesSize: size });
-    }, [updateSettings]);
+        video.setProp('subtitlesSize', size);
+        video.setProp('extraSubtitlesSize', size);
+        streamStateChanged({ subtitleSize: size });
+    }, [streamStateChanged]);
 
     const onUpdateSubtitlesSize = React.useCallback((delta) => {
         const sizeIndex = CONSTANTS.SUBTITLES_SIZES.indexOf(video.state.subtitlesSize);
@@ -279,8 +282,10 @@ const Player = ({ urlParams, queryParams }) => {
     }, [video.state.subtitlesSize, onSubtitlesSizeChanged]);
 
     const onSubtitlesOffsetChanged = React.useCallback((offset) => {
-        updateSettings({ subtitlesOffset: offset });
-    }, [updateSettings]);
+        video.setProp('subtitlesOffset', offset);
+        video.setProp('extraSubtitlesOffset', offset);
+        streamStateChanged({ subtitleOffset: offset });
+    }, [streamStateChanged]);
 
     const onDismissNextVideoPopup = React.useCallback(() => {
         closeNextVideoPopup();
@@ -409,31 +414,6 @@ const Player = ({ urlParams, queryParams }) => {
     }, [player.subtitles, video.state.stream]);
 
     React.useEffect(() => {
-        video.setProp('subtitlesSize', settings.subtitlesSize);
-        video.setProp('extraSubtitlesSize', settings.subtitlesSize);
-    }, [settings.subtitlesSize]);
-
-    React.useEffect(() => {
-        video.setProp('subtitlesOffset', settings.subtitlesOffset);
-        video.setProp('extraSubtitlesOffset', settings.subtitlesOffset);
-    }, [settings.subtitlesOffset]);
-
-    React.useEffect(() => {
-        video.setProp('subtitlesTextColor', settings.subtitlesTextColor);
-        video.setProp('extraSubtitlesTextColor', settings.subtitlesTextColor);
-    }, [settings.subtitlesTextColor]);
-
-    React.useEffect(() => {
-        video.setProp('subtitlesBackgroundColor', settings.subtitlesBackgroundColor);
-        video.setProp('extraSubtitlesBackgroundColor', settings.subtitlesBackgroundColor);
-    }, [settings.subtitlesBackgroundColor]);
-
-    React.useEffect(() => {
-        video.setProp('subtitlesOutlineColor', settings.subtitlesOutlineColor);
-        video.setProp('extraSubtitlesOutlineColor', settings.subtitlesOutlineColor);
-    }, [settings.subtitlesOutlineColor]);
-
-    React.useEffect(() => {
         !seeking && timeChanged(video.state.time, video.state.duration, video.state.manifest?.name);
     }, [video.state.time, video.state.duration, video.state.manifest, seeking]);
 
@@ -508,6 +488,28 @@ const Player = ({ urlParams, queryParams }) => {
             }
         }
     }, [video.state.audioTracks, player.streamState]);
+
+    // Saved subtitles settings
+    React.useEffect(() => {
+        if (video.state.stream !== null) {
+            const subtitlesDelay = player.streamState?.subtitleDelay;
+            if (typeof subtitlesDelay === 'number') {
+                video.setProp('extraSubtitlesDelay', subtitlesDelay);
+            }
+
+            const subtitlesSize = player.streamState?.subtitleSize;
+            if (typeof subtitlesSize === 'number') {
+                video.setProp('subtitlesSize', subtitlesSize);
+                video.setProp('extraSubtitlesSize', subtitlesSize);
+            }
+
+            const subtitlesOffset = player.streamState?.subtitleOffset;
+            if (typeof subtitlesOffset === 'number') {
+                video.setProp('subtitlesOffset', subtitlesOffset);
+                video.setProp('extraSubtitlesOffset', subtitlesOffset);
+            }
+        }
+    }, [video.state.stream, player.streamState]);
 
     React.useEffect(() => {
         defaultSubtitlesSelected.current = false;

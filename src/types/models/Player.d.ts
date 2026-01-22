@@ -41,6 +41,9 @@ type AudioTrackState = {
 
 type StreamState = {
     subtitleTrack?: SubtitlesTrackState,
+    subtitleDelay?: number,
+    subtitleSize?: number,
+    subtitleOffset?: number,
     audioTrack?: AudioTrackState,
 };
 
