@@ -90,7 +90,7 @@ const Player = ({ urlParams, queryParams }) => {
 
     const nextVideoPopupDismissed = React.useRef(false);
     const defaultSubtitlesSelected = React.useRef(false);
-    const lastSelectedSubtitleTrack = React.useRef(null);
+    const subtitlesEnabled = React.useRef(true);
     const defaultAudioTrackSelected = React.useRef(false);
     const [error, setError] = React.useState(null);
 
@@ -504,14 +504,6 @@ const Player = ({ urlParams, queryParams }) => {
     }, [video.state.stream, player.streamState]);
 
     React.useEffect(() => {
-        if (video.state.selectedSubtitlesTrackId !== null) {
-            lastSelectedSubtitleTrack.current = { id: video.state.selectedSubtitlesTrackId, embedded: true };
-        } else if (video.state.selectedExtraSubtitlesTrackId !== null) {
-            lastSelectedSubtitleTrack.current = { id: video.state.selectedExtraSubtitlesTrackId, embedded: false };
-        }
-    }, [video.state.selectedSubtitlesTrackId, video.state.selectedExtraSubtitlesTrackId]);
-
-    React.useEffect(() => {
         defaultSubtitlesSelected.current = false;
         defaultAudioTrackSelected.current = false;
         nextVideoPopupDismissed.current = false;
@@ -680,35 +672,25 @@ const Player = ({ urlParams, queryParams }) => {
     }, [onUpdateSubtitlesSize, onUpdateSubtitlesSize]);
 
     onShortcut('toggleSubtitles', () => {
-        const hasEmbedded = video.state.selectedSubtitlesTrackId !== null;
-        const hasExtra = video.state.selectedExtraSubtitlesTrackId !== null;
-        const last = lastSelectedSubtitleTrack.current;
+        const savedTrack = player.streamState?.subtitleTrack;
 
-        if (hasEmbedded || hasExtra) {
+        if (subtitlesEnabled.current) {
             video.setSubtitlesTrack(null);
             video.setExtraSubtitlesTrack(null);
-            return;
-        }
-
-        if (last) {
-            const tracks = last.embedded ? video.state.subtitlesTracks : video.state.extraSubtitlesTracks;
-            if (tracks?.some((t) => t.id === last.id)) {
-                last.embedded ? onSubtitlesTrackSelected(last.id) : onExtraSubtitlesTrackSelected(last.id);
-                return;
+        } else if (savedTrack?.id) {
+            savedTrack.embedded ? onSubtitlesTrackSelected(savedTrack.id) : onExtraSubtitlesTrackSelected(savedTrack.id);
+        } else {
+            const embeddedMatch = findTrackByLang(video.state.subtitlesTracks || [], settings.subtitlesLanguage);
+            const extraMatch = findTrackByLang(video.state.extraSubtitlesTracks || [], settings.subtitlesLanguage);
+            if (embeddedMatch) {
+                onSubtitlesTrackSelected(embeddedMatch.id);
+            } else if (extraMatch) {
+                onExtraSubtitlesTrackSelected(extraMatch.id);
             }
         }
 
-        const embeddedMatch = findTrackByLang(video.state.subtitlesTracks || [], settings.subtitlesLanguage);
-        if (embeddedMatch) {
-            onSubtitlesTrackSelected(embeddedMatch.id);
-            return;
-        }
-
-        const extraMatch = findTrackByLang(video.state.extraSubtitlesTracks || [], settings.subtitlesLanguage);
-        if (extraMatch) {
-            onExtraSubtitlesTrackSelected(extraMatch.id);
-        }
-    }, [video.state.selectedSubtitlesTrackId, video.state.selectedExtraSubtitlesTrackId, video.state.subtitlesTracks, video.state.extraSubtitlesTracks, settings.subtitlesLanguage, onSubtitlesTrackSelected, onExtraSubtitlesTrackSelected]);
+        subtitlesEnabled.current = !subtitlesEnabled.current;
+    }, [player.streamState, video.state.subtitlesTracks, video.state.extraSubtitlesTracks, settings.subtitlesLanguage, onSubtitlesTrackSelected, onExtraSubtitlesTrackSelected]);
 
     onShortcut('subtitlesMenu', () => {
         closeMenus();
