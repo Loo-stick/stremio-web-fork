@@ -60,6 +60,11 @@
                 "combos": [["ArrowDown"]]
             },
             {
+                "name": "mute",
+                "label": "SETTINGS_SHORTCUT_MUTE",
+                "combos": [["M"]]
+            },
+            {
                 "name": "subtitlesSize",
                 "label": "SETTINGS_SHORTCUT_SUBTITLES_SIZE",
                 "combos": [["-"], ["="]]
@@ -88,6 +93,16 @@
                 "name": "infoMenu",
                 "label": "SETTINGS_SHORTCUT_MENU_INFO",
                 "combos": [["I"]]
+            },
+            {
+                "name": "speedMenu",
+                "label": "SETTINGS_SHORTCUT_MENU_PLAYBACK_SPEED",
+                "combos": [["R"]]
+            },
+            {
+                "name": "statisticsMenu",
+                "label": "SETTINGS_SHORTCUT_MENU_STATISTICS",
+                "combos": [["D"]]
             }
         ]
     }

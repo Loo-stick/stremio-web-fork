@@ -19,6 +19,7 @@ const Player = forwardRef<HTMLDivElement, Props>(({ profile }: Props, ref) => {
         subtitlesTextColorInput,
         subtitlesBackgroundColorInput,
         subtitlesOutlineColorInput,
+        assSubtitlesStylingToggle,
         audioLanguageSelect,
         surroundSoundToggle,
         seekTimeDurationSelect,
@@ -111,7 +112,6 @@ const Player = forwardRef<HTMLDivElement, Props>(({ profile }: Props, ref) => {
                 <Option label={'SETTINGS_NEXT_VIDEO_POPUP_DURATION'}>
                     <MultiselectMenu
                         className={'multiselect'}
-                        disabled={!profile.settings.bingeWatching}
                         {...nextVideoPopupDurationSelect}
                     />
                 </Option>
@@ -147,6 +147,15 @@ const Player = forwardRef<HTMLDivElement, Props>(({ profile }: Props, ref) => {
                             <Toggle
                                 tabIndex={-1}
                                 {...pauseOnMinimizeToggle}
+                            />
+                        </Option>
+                }
+                {
+                    shell.active &&
+                        <Option label={'SETTINGS_ASS_SUBTITLES_STYLING'}>
+                            <Toggle
+                                tabIndex={-1}
+                                {...assSubtitlesStylingToggle}
                             />
                         </Option>
                 }

@@ -26,6 +26,9 @@ const Menu = ({ selected, streamingServer, onSelect }: Props) => {
             <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.GENERAL })} title={t('SETTINGS_NAV_GENERAL')} data-section={SECTIONS.GENERAL} onClick={onSelect}>
                 { t('SETTINGS_NAV_GENERAL') }
             </Button>
+            <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.INTERFACE })} title={t('INTERFACE')} data-section={SECTIONS.INTERFACE} onClick={onSelect}>
+                { t('INTERFACE') }
+            </Button>
             <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.PLAYER })} title={t('SETTINGS_NAV_PLAYER')} data-section={SECTIONS.PLAYER} onClick={onSelect}>
                 { t('SETTINGS_NAV_PLAYER') }
             </Button>
