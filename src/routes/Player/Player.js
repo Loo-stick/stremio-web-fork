@@ -679,18 +679,10 @@ const Player = ({ urlParams, queryParams }) => {
             video.setExtraSubtitlesTrack(null);
         } else if (savedTrack?.id) {
             savedTrack.embedded ? onSubtitlesTrackSelected(savedTrack.id) : onExtraSubtitlesTrackSelected(savedTrack.id);
-        } else {
-            const embeddedMatch = findTrackByLang(video.state.subtitlesTracks || [], settings.subtitlesLanguage);
-            const extraMatch = findTrackByLang(video.state.extraSubtitlesTracks || [], settings.subtitlesLanguage);
-            if (embeddedMatch) {
-                onSubtitlesTrackSelected(embeddedMatch.id);
-            } else if (extraMatch) {
-                onExtraSubtitlesTrackSelected(extraMatch.id);
-            }
         }
 
         subtitlesEnabled.current = !subtitlesEnabled.current;
-    }, [player.streamState, video.state.subtitlesTracks, video.state.extraSubtitlesTracks, settings.subtitlesLanguage, onSubtitlesTrackSelected, onExtraSubtitlesTrackSelected]);
+    }, [player.streamState]);
 
     onShortcut('subtitlesMenu', () => {
         closeMenus();
