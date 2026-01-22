@@ -678,7 +678,8 @@ const Player = ({ urlParams, queryParams }) => {
             video.setSubtitlesTrack(null);
             video.setExtraSubtitlesTrack(null);
         } else if (savedTrack?.id) {
-            savedTrack.embedded ? onSubtitlesTrackSelected(savedTrack.id) : onExtraSubtitlesTrackSelected(savedTrack.id);
+            video.setSubtitlesTrack(savedTrack?.id);
+            video.setExtraSubtitlesTrack(savedTrack?.id);
         }
 
         subtitlesEnabled.current = !subtitlesEnabled.current;
