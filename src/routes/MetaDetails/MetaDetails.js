@@ -81,7 +81,11 @@ const MetaDetails = ({ urlParams, queryParams }) => {
     const handleEpisodeSearch = React.useCallback((season, episode) => {
         const searchVideoHash = encodeURIComponent(`${urlParams.id}:${season}:${episode}`);
         const url = window.location.hash;
-        const searchVideoPath = url.replace(encodeURIComponent(urlParams.videoId), searchVideoHash);
+
+        const searchVideoPath = (urlParams.videoId === undefined || urlParams.videoId === null || urlParams.videoId === '') ?
+            url + (!url.endsWith('/') ? '/' : '') + searchVideoHash
+            : url.replace(encodeURIComponent(urlParams.videoId), searchVideoHash);
+
         window.location = searchVideoPath;
     }, [urlParams, window.location]);
 
