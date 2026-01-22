@@ -13,7 +13,6 @@ const useSeason = (urlParams, queryParams) => {
         const nextQueryParams = new URLSearchParams(queryParams);
         nextQueryParams.set('season', season);
         const path = urlParams.path.endsWith('/') ?
-            // remove the trailing /
             urlParams.path.slice(0, -1):
             urlParams.path;
 
