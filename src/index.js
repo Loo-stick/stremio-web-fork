@@ -46,3 +46,4 @@ if (process.env.NODE_ENV === 'production' && process.env.SERVICE_WORKER_DISABLED
 }
 // Build $(date +%s)
 // $(date)
+// clean $(date +%s)
