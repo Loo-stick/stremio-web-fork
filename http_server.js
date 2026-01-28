@@ -4,7 +4,7 @@
 
 const INDEX_CACHE = 7200;
 const ASSETS_CACHE = 2629744;
-const HTTP_PORT = 8080;
+const HTTP_PORT = process.env.PORT || 8082;
 
 const express = require('express');
 const path = require('path');
