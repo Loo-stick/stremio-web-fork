@@ -57,9 +57,9 @@ jobs:
         curl -L -o /tmp/ffmpeg-arm.zip "https://github.com/Tyrrrz/FFmpegBin/releases/download/7.1.2/ffmpeg-android-arm.zip"
         unzip -o /tmp/ffmpeg-arm.zip -d nodejs-server/ffmpeg/arm/
 
-        # Create ffprobe symlinks
-        cd nodejs-server/ffmpeg/arm64 && ln -sf ffmpeg ffprobe
-        cd ../arm && ln -sf ffmpeg ffprobe
+        # Copy ffmpeg as ffprobe (symlinks don't work well on Android)
+        cp nodejs-server/ffmpeg/arm64/ffmpeg nodejs-server/ffmpeg/arm64/ffprobe
+        cp nodejs-server/ffmpeg/arm/ffmpeg nodejs-server/ffmpeg/arm/ffprobe
 
         echo "FFmpeg binaries:"
         ls -laR ../
