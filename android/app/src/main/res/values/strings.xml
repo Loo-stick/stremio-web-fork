@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Stremio Fork</string>
+    <string name="title_activity_main">Stremio Fork</string>
+    <string name="package_name">ovh.loostick.stremiofork</string>
+    <string name="custom_url_scheme">ovh.loostick.stremiofork</string>
+</resources>

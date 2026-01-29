@@ -1,0 +1,80 @@
+name: Release Android APK
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Checkout stremio-video-fork
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.repository_owner }}/stremio-video-fork
+        path: ../stremio-video-fork
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web app
+      run: npm run build
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Build Release APK
+      working-directory: android
+      run: ./gradlew assembleRelease
+
+    - name: Sign APK
+      uses: r0adkll/sign-android-release@v1
+      id: sign_app
+      with:
+        releaseDirectory: android/app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        BUILD_TOOLS_VERSION: "34.0.0"
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: stremio-fork-release
+        path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+        retention-days: 90
+
+    - name: Upload to Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ steps.sign_app.outputs.signedReleaseFile }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

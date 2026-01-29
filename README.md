@@ -1,56 +1,132 @@
-# Stremio - Freedom to Stream
+# Stremio Web Fork - Support DRM Widevine
 
-[![Build](https://github.com/Stremio/stremio-web/actions/workflows/build.yml/badge.svg)](https://github.com/Stremio/stremio-web/actions/workflows/build.yml)
-[![Github Page](https://img.shields.io/website?label=Page&logo=github&up_message=online&down_message=offline&url=https%3A%2F%2Fstremio.github.io%2Fstremio-web%2F)](https://stremio.github.io/stremio-web/development)
+Fork de Stremio Web avec support natif Widevine DRM pour les replays TF1+ et autres contenus protégés.
 
-Stremio is a modern media center that's a one-stop solution for your video entertainment. You discover, watch and organize video content from easy to install addons.
+## Fonctionnalités
 
-## Build
+- Support Widevine DRM natif via Shaka Player
+- Bypass automatique du streaming server pour les flux DRM
+- Compatible navigateur web et Android (APK)
 
-### Prerequisites
+## Prérequis
 
-* Node.js 12 or higher
-* [pnpm](https://pnpm.io/installation) 10 or higher
+- Node.js 22+
+- npm
+- Git
 
-### Install dependencies
+## Installation rapide
 
-```bash
-pnpm install
-```
-
-### Start development server
+### 1. Cloner les repositories
 
 ```bash
-pnpm start
+# Cloner les deux repos côte à côte
+git clone https://github.com/VOTRE_USERNAME/stremio-video-fork.git
+git clone https://github.com/VOTRE_USERNAME/stremio-web-fork.git
 ```
 
-### Production build
+### 2. Installer les dépendances
 
 ```bash
-pnpm run build
+cd stremio-web-fork
+npm install
 ```
 
-### Run with Docker
+### 3. Builder le projet
 
 ```bash
-docker build -t stremio-web .
-docker run -p 8080:8080 stremio-web
+npm run build
 ```
 
-## Screenshots
+### 4. Lancer le serveur
 
-### Board
+```bash
+node http_server.js
+# ou avec PM2:
+pm2 start http_server.js --name stremio-fork
+```
 
-![Board](/assets/screenshots/board.png)
+Le site sera accessible sur `http://localhost:8080`
 
-### Discover
+## Configuration Apache (reverse proxy)
 
-![Discover](/assets/screenshots/discover.png)
+```apache
+<VirtualHost *:80>
+    ServerName votre-domaine.com
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
 
-### Meta Details
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</VirtualHost>
+```
 
-![Meta Details](/assets/screenshots/metadetails.png)
+## Build Android APK
 
-## License
+### Option 1: GitHub Actions (recommandé)
 
-Stremio is copyright 2017-2023 Smart code and available under GPLv2 license. See the [LICENSE](/LICENSE.md) file in the project for more information.
+1. Fork les deux repositories sur votre compte GitHub
+2. Activez GitHub Actions dans les paramètres du repo
+3. Allez dans Actions > "Build Android APK" > "Run workflow"
+4. Téléchargez l'APK depuis les artifacts
+
+### Option 2: Build local
+
+Prérequis:
+- Java JDK 17
+- Android SDK (Android Studio ou command-line tools)
+
+```bash
+# Sync et build
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+L'APK sera dans `android/app/build/outputs/apk/debug/`
+
+### Secrets pour Release signée
+
+Pour créer une APK signée (publication Play Store), ajoutez ces secrets dans GitHub:
+
+| Secret | Description |
+|--------|-------------|
+| `SIGNING_KEY` | Keystore en base64 (`base64 -w 0 keystore.jks`) |
+| `KEY_ALIAS` | Alias de la clé |
+| `KEY_STORE_PASSWORD` | Mot de passe du keystore |
+| `KEY_PASSWORD` | Mot de passe de la clé |
+
+## Structure du projet
+
+```
+stremio-web-fork/
+├── src/                    # Code source React
+├── build/                  # Build de production
+├── android/                # Projet Android (Capacitor)
+├── .github/workflows/      # GitHub Actions
+│   ├── build-android.yml   # Build APK debug
+│   └── release-android.yml # Build APK release signée
+├── capacitor.config.ts     # Config Capacitor
+└── http_server.js          # Serveur Express
+```
+
+## Addon DRM
+
+Pour utiliser le support DRM, l'addon doit retourner les `behaviorHints` suivants:
+
+```javascript
+{
+  url: "https://url-du-mpd.mpd",
+  behaviorHints: {
+    key_systems: {
+      "com.widevine.alpha": "https://license-server-url"
+    },
+    originalUrl: "https://url-originale-du-mpd.mpd"
+  }
+}
+```
+
+## Licence
+
+Ce projet est un fork non-officiel de Stremio. Stremio est copyright 2017-2023 Smart code et disponible sous licence GPLv2.
