@@ -39,7 +39,7 @@ jobs:
 
     - name: Install stremio-video-fork dependencies
       working-directory: stremio-video-fork
-      run: npm install
+      run: npm install --legacy-peer-deps
 
     - name: Install stremio-web-fork dependencies
       working-directory: stremio-web-fork
