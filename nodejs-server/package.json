@@ -1,0 +1,11 @@
+{
+  "name": "stremio-streaming-server",
+  "version": "1.0.0",
+  "description": "Embedded Stremio streaming server for Android",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "GPL-2.0"
+}

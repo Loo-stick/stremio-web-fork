@@ -36,6 +36,17 @@ i18n
 const root = ReactDOM.createRoot(document.getElementById('app'));
 root.render(<App />);
 
+// Initialize embedded streaming server on Android
+import('./services/StreamingServerService').then(({ initStreamingServer }) => {
+    initStreamingServer().then((serverUrl) => {
+        if (serverUrl) {
+            console.log('[Stremio] Embedded streaming server available at:', serverUrl);
+        }
+    });
+}).catch((err) => {
+    console.log('[Stremio] Embedded streaming server not available:', err.message);
+});
+
 if (process.env.NODE_ENV === 'production' && process.env.SERVICE_WORKER_DISABLED !== 'true' && process.env.SERVICE_WORKER_DISABLED !== true && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')

@@ -11,6 +11,11 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     cleartext: true
+  },
+  plugins: {
+    CapacitorNodeJS: {
+      nodeDir: 'nodejs'
+    }
   }
 };
 

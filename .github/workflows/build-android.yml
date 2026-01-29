@@ -37,6 +37,33 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
+    - name: Download Stremio streaming server
+      working-directory: stremio-web-fork
+      run: |
+        mkdir -p nodejs-server
+        curl -L -o nodejs-server/server.js "https://dl.strem.io/server/v4.20.11/desktop/server.js"
+        echo "Downloaded server.js: $(ls -lh nodejs-server/server.js)"
+
+    - name: Download FFmpeg binaries for Android
+      working-directory: stremio-web-fork
+      run: |
+        mkdir -p nodejs-server/ffmpeg/arm64 nodejs-server/ffmpeg/arm
+
+        # Download ARM64
+        curl -L -o /tmp/ffmpeg-arm64.zip "https://github.com/Tyrrrz/FFmpegBin/releases/download/7.1.2/ffmpeg-android-arm64.zip"
+        unzip -o /tmp/ffmpeg-arm64.zip -d nodejs-server/ffmpeg/arm64/
+
+        # Download ARM32
+        curl -L -o /tmp/ffmpeg-arm.zip "https://github.com/Tyrrrz/FFmpegBin/releases/download/7.1.2/ffmpeg-android-arm.zip"
+        unzip -o /tmp/ffmpeg-arm.zip -d nodejs-server/ffmpeg/arm/
+
+        # Create ffprobe symlinks
+        cd nodejs-server/ffmpeg/arm64 && ln -sf ffmpeg ffprobe
+        cd ../arm && ln -sf ffmpeg ffprobe
+
+        echo "FFmpeg binaries:"
+        ls -laR ../
+
     - name: Install stremio-video-fork dependencies
       working-directory: stremio-video-fork
       run: npm install
@@ -48,6 +75,12 @@ jobs:
     - name: Build web app
       working-directory: stremio-web-fork
       run: npm run build
+
+    - name: Verify nodejs folder in build
+      working-directory: stremio-web-fork
+      run: |
+        echo "Checking build/nodejs contents:"
+        ls -laR build/nodejs/ || echo "nodejs folder not found in build"
 
     - name: Sync Capacitor
       working-directory: stremio-web-fork

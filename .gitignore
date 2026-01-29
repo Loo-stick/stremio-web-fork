@@ -4,3 +4,6 @@
 /npm-debug.log
 .DS_Store
 .prettierignore
+# Streaming server binaries (downloaded during build)
+nodejs-server/ffmpeg/
+nodejs-server/server.js
