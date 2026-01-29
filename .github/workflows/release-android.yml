@@ -65,7 +65,7 @@ jobs:
         BUILD_TOOLS_VERSION: "34.0.0"
 
     - name: Upload Release APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: stremio-fork-release
         path: ${{ steps.sign_app.outputs.signedReleaseFile }}
