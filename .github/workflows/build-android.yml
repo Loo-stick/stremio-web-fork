@@ -43,7 +43,7 @@ jobs:
 
     - name: Install stremio-web-fork dependencies
       working-directory: stremio-web-fork
-      run: npm install
+      run: npm install --legacy-peer-deps
 
     - name: Build web app
       working-directory: stremio-web-fork
