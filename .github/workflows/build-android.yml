@@ -14,18 +14,19 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        path: stremio-web-fork
 
     - name: Checkout stremio-video-fork
       uses: actions/checkout@v4
       with:
         repository: ${{ github.repository_owner }}/stremio-video-fork
-        path: ../stremio-video-fork
+        path: stremio-video-fork
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '22'
-        cache: 'npm'
 
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -37,21 +38,24 @@ jobs:
       uses: android-actions/setup-android@v3
 
     - name: Install dependencies
-      run: npm ci
+      working-directory: stremio-web-fork
+      run: npm install
 
     - name: Build web app
+      working-directory: stremio-web-fork
       run: npm run build
 
     - name: Sync Capacitor
+      working-directory: stremio-web-fork
       run: npx cap sync android
 
     - name: Build APK
-      working-directory: android
+      working-directory: stremio-web-fork/android
       run: ./gradlew assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: stremio-fork-debug
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        path: stremio-web-fork/android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
