@@ -37,7 +37,11 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Install dependencies
+    - name: Install stremio-video-fork dependencies
+      working-directory: stremio-video-fork
+      run: npm install
+
+    - name: Install stremio-web-fork dependencies
       working-directory: stremio-web-fork
       run: npm install
 
