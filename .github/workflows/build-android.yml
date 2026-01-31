@@ -21,7 +21,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: Loo-stick/stremio-video-fork
-        ref: ${{ github.ref_name }}
+        ref: vlc-plugin
         path: stremio-video-fork
 
     - name: Setup Node.js
@@ -39,6 +39,10 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+
+    - name: Install stremio-video-fork dependencies
+      working-directory: stremio-video-fork
+      run: npm install
 
     - name: Build VLC Plugin
       working-directory: stremio-web-fork/capacitor-plugins/vlc
